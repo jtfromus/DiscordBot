@@ -1,0 +1,1 @@
+This is Silent's Discord bot
