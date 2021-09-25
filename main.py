@@ -1,17 +1,14 @@
 import os
 import discord
-
 from discord.ext import commands
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils.manage_commands import create_choice, create_option
-
 from dotenv import load_dotenv
-
-from D2RandMap import chose_rand_map
+from rand import chose_rand_map
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv('TOKEN')
-
+TEST_SERVER_ID = os.getenv('DS_TEST_SERVER_ID')
 bot = commands.Bot(command_prefix='~')
 slash = SlashCommand(bot, sync_commands=True)
 
@@ -21,10 +18,11 @@ async def on_ready():
     print(f'{bot.user.name} has joined Discord!')
 
 
+# Slash command
 @slash.slash(
     name='rand',
     description="This function will give you a randomized choice out of each option category",
-    guild_ids=[816481524299464734],
+    guild_ids=[TEST_SERVER_ID],
     options=[
         create_option(
             name="option",
@@ -45,6 +43,7 @@ async def _rand_map(ctx: SlashContext, option: str):
         await ctx.send(chose_rand_map())
 
 
+# Bot chat
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -55,6 +54,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
+# Text channel commands
 @bot.command()
 async def rand(ctx, *args):
     for arg in args:

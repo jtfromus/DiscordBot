@@ -5,20 +5,20 @@ import random
 # This function returns a string of the random map chosen
 def chose_rand_map():
     # If the maps list is exhausted reset it
-    if not D2RandMap.maps:
-        D2RandMap.maps = D2RandMap.used_maps
-        D2RandMap.used_maps = []
+    if not D2Maps.maps:
+        D2Maps.maps = D2Maps.used_maps
+        D2Maps.used_maps = []
 
     # Chose a random map
-    currentMap = random.choice(D2RandMap.maps)
-    D2RandMap.maps.remove(currentMap)
-    D2RandMap.used_maps.append(currentMap)
+    currentMap = random.choice(D2Maps.maps)
+    D2Maps.maps.remove(currentMap)
+    D2Maps.used_maps.append(currentMap)
 
     return currentMap.getName()
 
 
 # Temp solution for having a list of maps
-class D2RandMap:
+class D2Maps:
     used_maps = []
     # add all the maps to a list
     maps = [Map("Alter of Flames"),
