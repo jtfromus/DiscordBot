@@ -5,7 +5,8 @@ import json
 
 from discord.ext import commands
 from dotenv import load_dotenv
-
+from model import D2map
+from D2RandMap import D2RandMap, chose_rand_map
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv('TOKEN')
@@ -41,9 +42,10 @@ print("TOKEN: " + DISCORD_TOKEN)
 
 
 @bot.command()
-async def random(ctx, *args):
-    print('random is called')
-    await ctx.send('{} arguments: {}'.format(len(args), ', '.join(args)))
+async def rand(ctx, *args):
+    for arg in args:
+        if arg == '-m':
+            await ctx.send(chose_rand_map())
 
 
 bot.run(DISCORD_TOKEN)
