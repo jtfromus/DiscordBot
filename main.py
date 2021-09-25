@@ -1,16 +1,49 @@
-# This is a sample Python script.
+import os
+import discord
+import requests
+import json
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+from discord.ext import commands
+from dotenv import load_dotenv
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+load_dotenv()
+DISCORD_TOKEN = os.getenv('TOKEN')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+client = discord.Client()
+bot = commands.Bot(command_prefix='~')
+
+"""
+def get_map():
+    response = requests.get("https://")
+    jsonData = json.loads(response.text)
+    map = jsonData[][] + " -"
+    return(map)
+"""
+
+
+@bot.event
+async def on_ready():
+    print(f'{bot.user.name} has joined Discord!')
+
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    if message.content.startswith('SSlave'):
+        await message.channel.send('SSlave sees you...')
+    await bot.process_commands(message)
+
+
+print("TOKEN: " + DISCORD_TOKEN)
+
+
+@bot.command()
+async def random(ctx, *args):
+    print('random is called')
+    await ctx.send('{} arguments: {}'.format(len(args), ', '.join(args)))
+
+
+bot.run(DISCORD_TOKEN)
