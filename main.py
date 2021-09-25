@@ -1,31 +1,48 @@
 import os
 import discord
-import requests
-import json
 
 from discord.ext import commands
+from discord_slash import SlashCommand, SlashContext
+from discord_slash.utils.manage_commands import create_choice, create_option
+
 from dotenv import load_dotenv
-from model import D2map
-from D2RandMap import D2RandMap, chose_rand_map
+
+from D2RandMap import chose_rand_map
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv('TOKEN')
 
-client = discord.Client()
 bot = commands.Bot(command_prefix='~')
-
-"""
-def get_map():
-    response = requests.get("https://")
-    jsonData = json.loads(response.text)
-    map = jsonData[][] + " -"
-    return(map)
-"""
+slash = SlashCommand(bot, sync_commands=True)
 
 
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has joined Discord!')
+
+
+@slash.slash(
+    name='rand',
+    description="This function will give you a randomized choice out of each option category",
+    guild_ids=[816481524299464734],
+    options=[
+        create_option(
+            name="option",
+            description="chose what to be random",
+            required=True,
+            option_type=3,
+            choices=[
+                create_choice(
+                    name="map",
+                    value="m"
+                )
+            ]
+        )
+    ]
+)
+async def _rand_map(ctx: SlashContext, option: str):
+    if option == 'm':
+        await ctx.send(chose_rand_map())
 
 
 @bot.event
@@ -38,14 +55,10 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-print("TOKEN: " + DISCORD_TOKEN)
-
-
 @bot.command()
 async def rand(ctx, *args):
     for arg in args:
         if arg == '-m':
             await ctx.send(chose_rand_map())
-
 
 bot.run(DISCORD_TOKEN)
