@@ -22,7 +22,7 @@ async def on_ready():
 @slash.slash(
     name='rand',
     description="This function will give you a randomized choice out of each option category",
-    guild_ids=[TEST_SERVER_ID],
+    guild_ids=[int(TEST_SERVER_ID)],
     options=[
         create_option(
             name="option",
