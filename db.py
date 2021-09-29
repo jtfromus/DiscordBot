@@ -1,4 +1,4 @@
-import requests, zipfile, os, pickle, json, sqlite3
+import requests, zipfile, os, json, sqlite3
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -32,43 +32,6 @@ def get_manifest():
     print('Unzipped!')
 
 
-hashes = {
-    'DestinyActivityDefinition': 'activityHash',
-    'DestinyActivityTypeDefinition': 'activityTypeHash',
-    'DestinyClassDefinition': 'classHash',
-    'DestinyGenderDefinition': 'genderHash',
-    'DestinyInventoryBucketDefinition': 'bucketHash',
-    'DestinyInventoryItemDefinition': 'itemHash',
-    'DestinyProgressionDefinition': 'progressionHash',
-    'DestinyRaceDefinition': 'raceHash',
-    'DestinyTalentGridDefinition': 'gridHash',
-    'DestinyUnlockFlagDefinition': 'flagHash',
-    'DestinyHistoricalStatsDefinition': 'statId',
-    'DestinyDirectorBookDefinition': 'bookHash',
-    'DestinyStatDefinition': 'statHash',
-    'DestinySandboxPerkDefinition': 'perkHash',
-    'DestinyDestinationDefinition': 'destinationHash',
-    'DestinyPlaceDefinition': 'placeHash',
-    'DestinyActivityBundleDefinition': 'bundleHash',
-    'DestinyStatGroupDefinition': 'statGroupHash',
-    'DestinySpecialEventDefinition': 'eventHash',
-    'DestinyFactionDefinition': 'factionHash',
-    'DestinyVendorCategoryDefinition': 'categoryHash',
-    'DestinyEnemyRaceDefinition': 'raceHash',
-    'DestinyScriptedSkullDefinition': 'skullHash',
-    'DestinyGrimoireCardDefinition': 'cardId'
-}
-
-hashes_trunc = {
-    'DestinyInventoryItemDefinition': 'itemHash',
-    'DestinyTalentGridDefinition': 'gridHash',
-    'DestinyHistoricalStatsDefinition': 'statId',
-    'DestinyStatDefinition': 'statHash',
-    'DestinySandboxPerkDefinition': 'perkHash',
-    'DestinyStatGroupDefinition': 'statGroupHash'
-}
-
-
 # return a list of the name of crucible maps
 def get_maps():
     maps = []
@@ -95,41 +58,3 @@ def get_maps():
                 # add the name to a list
                 maps.append(item['originalDisplayProperties']['name'])
     return maps
-
-
-def build_dict(hash_dict):
-    # connect to the manifest
-    con = sqlite3.connect('manifest.content')
-    print('Connected')
-    # create a cursor object
-    cur = con.cursor()
-
-    all_data = {}
-    # for every table name in the dictionary
-    for table_name in hash_dict.keys():
-        # get a list of all the jsons from the table
-        cur.execute('SELECT json from ' + table_name)
-        print('Generating ' + table_name + ' dictionary....')
-
-        # this returns a list of tuples: the first item in each tuple is our json
-        items = cur.fetchall()
-
-        # create a list of jsons
-        item_jsons = [json.loads(item[0]) for item in items]
-
-        # create a dictionary with the hashes as keys
-        # and the jsons as values
-        item_dict = {}
-        hash = hash_dict[table_name]
-        for item in item_jsons:
-            print(item)
-            print(hash)
-            print(item[hash])
-            item_dict[item[hash]] = item
-
-        # add that dictionary to our all_data using the name of the table
-        # as a key.
-        all_data[table_name] = item_dict
-
-    print('Dictionary Generated!')
-    return all_data
