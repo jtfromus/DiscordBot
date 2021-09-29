@@ -1,0 +1,135 @@
+import requests, zipfile, os, pickle, json, sqlite3
+from dotenv import load_dotenv
+
+load_dotenv()
+BUNGIE_API_KEY = os.getenv('BUNGIE_API_KEY')
+BASE_URL = 'https://bungie.net/Platform/Destiny2'
+BASE_URL_GROUP_V2 = 'https://bungie.net/Platform/GroupV2'
+
+
+# This code was altered from JAMeador13's code from http://destinydevs.github.io/BungieNetPlatform/docs/Manifest.
+def get_manifest():
+    my_headers = {"X-API-Key": BUNGIE_API_KEY}
+    manifest_url = BASE_URL + '/Manifest/'
+
+    # get the manifest location from the json
+    r = requests.get(manifest_url, headers=my_headers)
+    manifest = r.json()
+    mani_url = 'http://www.bungie.net' + manifest['Response']['mobileWorldContentPaths']['en']
+
+    # Download the file, write it to 'MANZIP'
+    r = requests.get(mani_url)
+    with open("MANZIP", "wb") as zip:
+        zip.write(r.content)
+    print("Download Complete!")
+
+    # Extract the file contents, and rename the extracted file
+    # to 'Manifest.content'
+    with zipfile.ZipFile('MANZIP') as zip:
+        name = zip.namelist()
+        zip.extractall()
+    os.rename(name[0], 'Manifest.content')
+    print('Unzipped!')
+
+
+hashes = {
+    'DestinyActivityDefinition': 'activityHash',
+    'DestinyActivityTypeDefinition': 'activityTypeHash',
+    'DestinyClassDefinition': 'classHash',
+    'DestinyGenderDefinition': 'genderHash',
+    'DestinyInventoryBucketDefinition': 'bucketHash',
+    'DestinyInventoryItemDefinition': 'itemHash',
+    'DestinyProgressionDefinition': 'progressionHash',
+    'DestinyRaceDefinition': 'raceHash',
+    'DestinyTalentGridDefinition': 'gridHash',
+    'DestinyUnlockFlagDefinition': 'flagHash',
+    'DestinyHistoricalStatsDefinition': 'statId',
+    'DestinyDirectorBookDefinition': 'bookHash',
+    'DestinyStatDefinition': 'statHash',
+    'DestinySandboxPerkDefinition': 'perkHash',
+    'DestinyDestinationDefinition': 'destinationHash',
+    'DestinyPlaceDefinition': 'placeHash',
+    'DestinyActivityBundleDefinition': 'bundleHash',
+    'DestinyStatGroupDefinition': 'statGroupHash',
+    'DestinySpecialEventDefinition': 'eventHash',
+    'DestinyFactionDefinition': 'factionHash',
+    'DestinyVendorCategoryDefinition': 'categoryHash',
+    'DestinyEnemyRaceDefinition': 'raceHash',
+    'DestinyScriptedSkullDefinition': 'skullHash',
+    'DestinyGrimoireCardDefinition': 'cardId'
+}
+
+hashes_trunc = {
+    'DestinyInventoryItemDefinition': 'itemHash',
+    'DestinyTalentGridDefinition': 'gridHash',
+    'DestinyHistoricalStatsDefinition': 'statId',
+    'DestinyStatDefinition': 'statHash',
+    'DestinySandboxPerkDefinition': 'perkHash',
+    'DestinyStatGroupDefinition': 'statGroupHash'
+}
+
+
+# return a list of the name of crucible maps
+def get_maps():
+    maps = []
+
+    # connect to the manifest
+    con = sqlite3.connect('manifest.content')
+    print('Connected')
+    # create a cursor object
+    cur = con.cursor()
+
+    # get a list of all jsons from the DestinyActivityDefinition
+    cur.execute('SELECT json from DestinyActivityDefinition')
+
+    # this returns a list of tuples: the first item in each tuple is our json
+    items = cur.fetchall()
+
+    # create a list of jsons
+    item_jsons = [json.loads(item[0]) for item in items]
+
+    for item in item_jsons:
+        # 4088006058 is the crucible
+        if item['placeHash'] == 4088006058 and item['activityTypeHash'] == 4088006058 and not item['isPvP']:
+            if not item['originalDisplayProperties']['name'] in maps:
+                # add the name to a list
+                maps.append(item['originalDisplayProperties']['name'])
+    return maps
+
+
+def build_dict(hash_dict):
+    # connect to the manifest
+    con = sqlite3.connect('manifest.content')
+    print('Connected')
+    # create a cursor object
+    cur = con.cursor()
+
+    all_data = {}
+    # for every table name in the dictionary
+    for table_name in hash_dict.keys():
+        # get a list of all the jsons from the table
+        cur.execute('SELECT json from ' + table_name)
+        print('Generating ' + table_name + ' dictionary....')
+
+        # this returns a list of tuples: the first item in each tuple is our json
+        items = cur.fetchall()
+
+        # create a list of jsons
+        item_jsons = [json.loads(item[0]) for item in items]
+
+        # create a dictionary with the hashes as keys
+        # and the jsons as values
+        item_dict = {}
+        hash = hash_dict[table_name]
+        for item in item_jsons:
+            print(item)
+            print(hash)
+            print(item[hash])
+            item_dict[item[hash]] = item
+
+        # add that dictionary to our all_data using the name of the table
+        # as a key.
+        all_data[table_name] = item_dict
+
+    print('Dictionary Generated!')
+    return all_data

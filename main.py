@@ -1,9 +1,13 @@
 import os
+import pickle
+
 import discord
 from discord.ext import commands
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils.manage_commands import create_choice, create_option
 from dotenv import load_dotenv
+
+import db
 from rand import chose_rand_map
 
 load_dotenv()
@@ -43,6 +47,15 @@ async def _rand_map(ctx: SlashContext, option: str):
         await ctx.send(chose_rand_map())
 
 
+@slash.slash(
+    name='updateDB',
+    description="This function will update the database from bungie",
+    guild_ids=[int(TEST_SERVER_ID)],
+)
+async def _rand_map(ctx: SlashContext):
+    await ctx.send(db.get_manifest())
+
+
 # Bot chat
 @bot.event
 async def on_message(message):
@@ -60,5 +73,12 @@ async def rand(ctx, *args):
     for arg in args:
         if arg == '-m':
             await ctx.send(chose_rand_map())
+
+
+# check if pickle exists, if not create one.
+if not os.path.isfile(r'manifest.content'):
+    db.get_manifest()
+else:
+    print('DB Exists')
 
 bot.run(DISCORD_TOKEN)
