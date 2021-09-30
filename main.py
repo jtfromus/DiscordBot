@@ -100,7 +100,7 @@ async def _dice_roll(ctx: SlashContext, value: str):
     result = []
     total = 0
 
-    if re.match(pattern, value) and value:
+    if re.match(pattern, value):
 
         # split the two numbers
         dice = value.split('d')
@@ -111,7 +111,7 @@ async def _dice_roll(ctx: SlashContext, value: str):
             total += v
             result.append(v)
 
-        result_str = "Total: " + str(total) + "\nRoll result: \n|"
+        result_str = "Total: " + str(total) + "\nRoll result: \n| "
         for i in result:
             result_str += str(i) + ' | '
         embed = discord.Embed(title=value,
