@@ -1,26 +1,27 @@
 import os
 import discord
-import requests
-import json
+
 
 from discord.ext import commands
+from discord_slash import SlashCommand, SlashContext
+from discord_slash.utils.manage_commands import create_choice, create_option
 from dotenv import load_dotenv
-from model import D2map
-from D2RandMap import D2RandMap, chose_rand_map
+from rand import reset_maps, chose_rand_map
+
+import db
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv('TOKEN')
-
-client = discord.Client()
+TEST_SERVER_ID = os.getenv('DS_TEST_SERVER_ID')
+BUNGIE_URL = os.getenv('BUNGIE_URL')
 bot = commands.Bot(command_prefix='~')
+slash = SlashCommand(bot, sync_commands=True)
 
-"""
-def get_map():
-    response = requests.get("https://")
-    jsonData = json.loads(response.text)
-    map = jsonData[][] + " -"
-    return(map)
-"""
+# check if pickle exists, if not create one.
+if not os.path.isfile(r'manifest.content'):
+    db.get_manifest()
+else:
+    print('DB Exists')
 
 
 @bot.event
@@ -28,6 +29,48 @@ async def on_ready():
     print(f'{bot.user.name} has joined Discord!')
 
 
+# Slash command
+@slash.slash(
+    name='rand',
+    description="This function will give you a randomized choice out of each option category",
+    guild_ids=[int(TEST_SERVER_ID)],
+    options=[
+        create_option(
+            name="option",
+            description="chose what to be random",
+            required=True,
+            option_type=3,
+            choices=[
+                create_choice(
+                    name="map",
+                    value="m"
+                )
+            ]
+        )
+    ]
+)
+async def _rand_map(ctx: SlashContext, option: str):
+    if option == 'm':
+        chosen_map = chose_rand_map()
+        embed = discord.Embed(title=chosen_map.get_name(),
+                              url=BUNGIE_URL + chosen_map.get_image_url(),
+                              color=0xFF5733)
+        embed.set_image(url=BUNGIE_URL + chosen_map.get_image_url())
+        await ctx.send(embed=embed)
+
+
+@slash.slash(
+    name='updateDB',
+    description="This function will update the database from bungie",
+    guild_ids=[int(TEST_SERVER_ID)],
+)
+async def _rand_map(ctx: SlashContext):
+    db.get_manifest()
+    reset_maps()
+    await ctx.send('Database is updated')
+
+
+# Bot chat
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -38,14 +81,11 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-print("TOKEN: " + DISCORD_TOKEN)
-
-
+# Text channel commands
 @bot.command()
 async def rand(ctx, *args):
     for arg in args:
         if arg == '-m':
-            await ctx.send(chose_rand_map())
-
+            await ctx.send(rand.chose_rand_map())
 
 bot.run(DISCORD_TOKEN)

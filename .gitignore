@@ -1,1 +1,6 @@
 .env
+Manifest.content
+MANZIP
+venv
+__pycache__
+.idea
