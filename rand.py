@@ -1,14 +1,15 @@
 import random
-
-# This function returns a string of the random map chosen
 from db import get_maps
+
 
 class D2Maps:
     used_maps = []
     # add all the maps to a list
     maps = get_maps()
-    print(str(len(maps))+" maps loaded")
+    print(str(len(maps)) + " maps loaded")
 
+
+# This function returns a random map object
 def chose_rand_map():
     # If the maps list is exhausted reset it
     if not D2Maps.maps:
@@ -24,6 +25,7 @@ def chose_rand_map():
     return currentMap
 
 
+# reset the list from database
 def reset_maps():
     D2Maps.used_maps = []
     D2Maps.maps = get_maps()
