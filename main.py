@@ -1,6 +1,9 @@
 import os
+import random
+
 import discord
 import db
+import re
 
 from discord.ext import commands
 from discord_slash import SlashCommand, SlashContext
@@ -14,6 +17,7 @@ DISCORD_TOKEN = os.getenv('TOKEN')
 TEST_SERVER_ID = os.getenv('DS_TEST_SERVER_ID')
 SERVER_ID = os.getenv('SERVER_ID')
 BUNGIE_URL = os.getenv('BUNGIE_URL')
+guild_id_list = [int(TEST_SERVER_ID), int(SERVER_ID)]
 
 # bot command settings
 bot = commands.Bot(command_prefix='~')
@@ -40,7 +44,7 @@ async def on_ready():
 @slash.slash(
     name='rand',
     description="This function will give you a randomized choice out of each option category",
-    guild_ids=[int(TEST_SERVER_ID),int(SERVER_ID)],
+    guild_ids=guild_id_list,
     options=[
         create_option(
             name="option",
@@ -78,9 +82,53 @@ async def _rand_map(ctx: SlashContext, option: str):
 
 
 @slash.slash(
+    name='dice_rolls',
+    description="This function return a random dice roll for you ;)",
+    guild_ids=guild_id_list,
+    options=[
+        create_option(
+            name="value",
+            description="<int>d<int> ex: 2d4",
+            required=True,
+            option_type=3
+        )
+    ]
+)
+async def _dice_roll(ctx: SlashContext, value: str):
+    # patter for input validation
+    pattern = '^[1-9]\d*d[1-9]\d*$'
+    result = []
+    total = 0
+
+    if re.match(pattern, value) and value:
+
+        # split the two numbers
+        dice = value.split('d')
+
+        # roll the dice
+        for x in range(int(dice[0])):
+            v = random.randint(1, int(dice[1]))
+            total += v
+            result.append(v)
+
+        result_str = "Total: " + str(total) + "\nRoll result: \n|"
+        for i in result:
+            result_str += str(i) + ' | '
+        embed = discord.Embed(title=value,
+                              description=result_str,
+                              color=0xFF5733)
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(title='ERROR',
+                              description='You entered an invalid value: ' + value + '\nit should\'ve been <int>d<int>',
+                              color=0xFF5733)
+        await ctx.send(embed=embed)
+
+
+@slash.slash(
     name='updateDB',
     description="This function will update the database from bungie",
-    guild_ids=[int(TEST_SERVER_ID),int(SERVER_ID)],
+    guild_ids=guild_id_list,
 )
 async def _update_db(ctx: SlashContext):
     db.get_manifest()
@@ -107,5 +155,6 @@ async def rand(ctx, *args):
     for arg in args:
         if arg == '-m':
             await ctx.send(rand.chose_rand_map())
+
 
 bot.run(DISCORD_TOKEN)
