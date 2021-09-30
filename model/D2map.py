@@ -15,4 +15,3 @@ class Map:
 
     def set_image_url(self, url):
         self.image_url = url
-

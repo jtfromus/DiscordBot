@@ -7,10 +7,12 @@ class D2Maps:
     used_maps = []
     # add all the maps to a list
     maps = get_maps()
+    print(str(len(maps))+" maps loaded")
 
 def chose_rand_map():
     # If the maps list is exhausted reset it
     if not D2Maps.maps:
+        print('list exhausted')
         D2Maps.maps = D2Maps.used_maps
         D2Maps.used_maps = []
 

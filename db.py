@@ -55,8 +55,13 @@ def get_maps():
 
     for item in item_jsons:
         # 4088006058 is the crucible
-        if item['placeHash'] == 4088006058 and item['activityTypeHash'] == 4088006058 and not item['isPvP']:
-            if not item['originalDisplayProperties']['name'] in maps:
-                # add the name to a list
-                maps.append(Map(item['originalDisplayProperties']['name'], item['pgcrImage']))
+        if item['activityTypeHash'] == 4088006058 and item['placeHash'] == 4088006058 and not item['isPvP'] and item['pgcrImage'] != '/img/theme/destiny/bgs/pgcrs/placeholder.jpg':
+            newMap = Map(item['originalDisplayProperties']['name'], item['pgcrImage'])
+            # check for duplication
+            isDupe = False
+            for m in maps:
+                if m.get_name().__contains__(newMap.get_name()):
+                    isDupe = True
+            if not isDupe:
+                maps.append(newMap)
     return maps

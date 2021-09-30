@@ -17,6 +17,12 @@ BUNGIE_URL = os.getenv('BUNGIE_URL')
 bot = commands.Bot(command_prefix='~')
 slash = SlashCommand(bot, sync_commands=True)
 
+# check if pickle exists, if not create one.
+if not os.path.isfile(r'manifest.content'):
+    db.get_manifest()
+else:
+    print('DB Exists')
+
 
 @bot.event
 async def on_ready():
@@ -81,12 +87,5 @@ async def rand(ctx, *args):
     for arg in args:
         if arg == '-m':
             await ctx.send(rand.chose_rand_map())
-
-
-# check if pickle exists, if not create one.
-if not os.path.isfile(r'manifest.content'):
-    db.get_manifest()
-else:
-    print('DB Exists')
 
 bot.run(DISCORD_TOKEN)
