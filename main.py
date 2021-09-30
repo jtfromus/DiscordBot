@@ -1,18 +1,19 @@
 import os
-import pickle
-
 import discord
+
+
 from discord.ext import commands
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils.manage_commands import create_choice, create_option
 from dotenv import load_dotenv
+from rand import reset_maps, chose_rand_map
 
 import db
-from rand import chose_rand_map
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv('TOKEN')
 TEST_SERVER_ID = os.getenv('DS_TEST_SERVER_ID')
+BUNGIE_URL = os.getenv('BUNGIE_URL')
 bot = commands.Bot(command_prefix='~')
 slash = SlashCommand(bot, sync_commands=True)
 
@@ -44,7 +45,12 @@ async def on_ready():
 )
 async def _rand_map(ctx: SlashContext, option: str):
     if option == 'm':
-        await ctx.send(chose_rand_map())
+        chosen_map = chose_rand_map()
+        embed = discord.Embed(title=chosen_map.get_name(),
+                              url=BUNGIE_URL + chosen_map.get_image_url(),
+                              color=0xFF5733)
+        embed.set_image(url=BUNGIE_URL + chosen_map.get_image_url())
+        await ctx.send(embed=embed)
 
 
 @slash.slash(
@@ -53,7 +59,9 @@ async def _rand_map(ctx: SlashContext, option: str):
     guild_ids=[int(TEST_SERVER_ID)],
 )
 async def _rand_map(ctx: SlashContext):
-    await ctx.send(db.get_manifest())
+    db.get_manifest()
+    reset_maps()
+    await ctx.send('Database is updated')
 
 
 # Bot chat
@@ -72,7 +80,7 @@ async def on_message(message):
 async def rand(ctx, *args):
     for arg in args:
         if arg == '-m':
-            await ctx.send(chose_rand_map())
+            await ctx.send(rand.chose_rand_map())
 
 
 # check if pickle exists, if not create one.

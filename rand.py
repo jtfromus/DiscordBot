@@ -1,9 +1,13 @@
-from db import get_maps
-from model.D2map import Map
 import random
 
-
 # This function returns a string of the random map chosen
+from db import get_maps
+
+class D2Maps:
+    used_maps = []
+    # add all the maps to a list
+    maps = get_maps()
+
 def chose_rand_map():
     # If the maps list is exhausted reset it
     if not D2Maps.maps:
@@ -15,14 +19,9 @@ def chose_rand_map():
     D2Maps.maps.remove(currentMap)
     D2Maps.used_maps.append(currentMap)
 
-    return currentMap.getName()
+    return currentMap
 
 
-# Temp solution for having a list of maps
-class D2Maps:
-    used_maps = []
-    maps = []
-    # add all the maps to a list
-    map_names = get_maps()
-    for name in map_names:
-        maps.append(Map(name))
+def reset_maps():
+    D2Maps.used_maps = []
+    D2Maps.maps = get_maps()

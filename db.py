@@ -1,6 +1,8 @@
 import requests, zipfile, os, json, sqlite3
 from dotenv import load_dotenv
 
+from model.D2map import Map
+
 load_dotenv()
 BUNGIE_API_KEY = os.getenv('BUNGIE_API_KEY')
 BASE_URL = 'https://bungie.net/Platform/Destiny2'
@@ -32,7 +34,7 @@ def get_manifest():
     print('Unzipped!')
 
 
-# return a list of the name of crucible maps
+# return a list crucible Map objects
 def get_maps():
     maps = []
 
@@ -56,5 +58,5 @@ def get_maps():
         if item['placeHash'] == 4088006058 and item['activityTypeHash'] == 4088006058 and not item['isPvP']:
             if not item['originalDisplayProperties']['name'] in maps:
                 # add the name to a list
-                maps.append(item['originalDisplayProperties']['name'])
+                maps.append(Map(item['originalDisplayProperties']['name'], item['pgcrImage']))
     return maps
