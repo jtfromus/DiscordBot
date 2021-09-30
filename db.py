@@ -1,7 +1,7 @@
 import requests, zipfile, os, json, sqlite3
 from dotenv import load_dotenv
 
-from model.D2map import Map
+from model.Map import Map
 
 load_dotenv()
 BUNGIE_API_KEY = os.getenv('BUNGIE_API_KEY')
@@ -36,7 +36,8 @@ def get_manifest():
 
 # return a list crucible Map objects
 def get_maps():
-    maps = []
+    crucible_maps = []
+    gambit_maps = []
 
     # connect to the manifest
     con = sqlite3.connect('manifest.content')
@@ -53,15 +54,27 @@ def get_maps():
     # create a list of jsons
     item_jsons = [json.loads(item[0]) for item in items]
 
+    place_holder_image = '/img/theme/destiny/bgs/pgcrs/placeholder.jpg'
+
     for item in item_jsons:
         # 4088006058 is the crucible
-        if item['activityTypeHash'] == 4088006058 and item['placeHash'] == 4088006058 and not item['isPvP'] and item['pgcrImage'] != '/img/theme/destiny/bgs/pgcrs/placeholder.jpg':
+        if item['activityTypeHash'] == 4088006058 and item['placeHash'] == 4088006058 and not item['isPvP'] and item['pgcrImage'] != place_holder_image:
             newMap = Map(item['originalDisplayProperties']['name'], item['pgcrImage'], item['originalDisplayProperties']['description'])
             # check for duplication
-            isDupe = False
-            for m in maps:
-                if m.get_name().__contains__(newMap.get_name()):
-                    isDupe = True
-            if not isDupe:
-                maps.append(newMap)
-    return maps
+            if not check_for_dupe(newMap, crucible_maps):
+                crucible_maps.append(newMap)
+
+        # 248695599 is gambit
+        if item['activityTypeHash'] == 248695599 and item['placeHash'] == 248695599 and item['pgcrImage'] != place_holder_image:
+            newMap = Map(item['originalDisplayProperties']['name'], item['pgcrImage'],item['originalDisplayProperties']['description'])
+            if not check_for_dupe(newMap, gambit_maps):
+                gambit_maps.append(newMap)
+
+    return crucible_maps, gambit_maps
+
+
+def check_for_dupe(new_map, map_list):
+    for m in map_list:
+        if m.get_name().__contains__(new_map.get_name()):
+            return True
+    return False
