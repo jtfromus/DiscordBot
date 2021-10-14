@@ -33,6 +33,7 @@ else:
 cl, gl = db.get_maps()
 gambit_list = MapList(gl)
 crucible_list = MapList(cl)
+kinetic, energy, power = db.get_all_weapons()
 
 
 @bot.event
@@ -47,7 +48,7 @@ async def on_ready():
     guild_ids=guild_id_list,
     options=[
         create_option(
-            name="option",
+            name="playlist",
             description="chose what to be random",
             required=True,
             option_type=3,
@@ -61,14 +62,20 @@ async def on_ready():
                     value="g"
                 )
             ]
+        ),
+        create_option(
+            name="weapon",
+            description="generate random weapon types",
+            required=False,
+            option_type=5
         )
     ]
 )
-async def _rand_map(ctx: SlashContext, option: str):
-    if option == 'c':
+async def _rand(ctx: SlashContext, playlist: str, weapon: bool = None) -> None:
+    if playlist == 'c':
         chosen_map = crucible_list.chose_rand_map()
         thumbnail = 'https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_5b371fef4ecafe733ad487a8fae3b9f5.png'
-    elif option == 'g':
+    elif playlist == 'g':
         chosen_map = gambit_list.chose_rand_map()
         thumbnail = 'https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_96f7e9009d4f26e30cfd60564021925e.png'
 
@@ -78,6 +85,15 @@ async def _rand_map(ctx: SlashContext, option: str):
                           color=0xFF5733)
     embed.set_thumbnail(url=thumbnail)
     embed.set_image(url=BUNGIE_URL + chosen_map.get_image_url())
+
+    if weapon is not None and weapon:
+        kin = random.choice(kinetic)
+        embed.add_field(name='Kinetic', value=kin.get_weapon_type(), inline=True)
+        ene = random.choice(energy)
+        embed.add_field(name='Energy', value=ene.get_weapon_type(), inline=True)
+        heavy = random.choice(power)
+        embed.add_field(name='Power', value=heavy.get_weapon_type(), inline=True)
+
     await ctx.send(embed=embed)
 
 
@@ -94,7 +110,7 @@ async def _rand_map(ctx: SlashContext, option: str):
         )
     ]
 )
-async def _dice_roll(ctx: SlashContext, value: str):
+async def _dice_roll(ctx: SlashContext, value: str) -> None:
     # patter for input validation
     pattern = '^[1-9]\d*d[1-9]\d*$'
     result = []
@@ -127,20 +143,24 @@ async def _dice_roll(ctx: SlashContext, value: str):
 
 @slash.slash(
     name='updateDB',
-    description="This function will update the database from bungie",
+    description="This function will update the database from bungie, and refresh the lists for the bot",
     guild_ids=guild_id_list,
 )
-async def _update_db(ctx: SlashContext):
+async def _update_db(ctx: SlashContext) -> None:
+    await ctx.defer()
     db.get_manifest()
     c, g = db.get_maps()
     gambit_list.reset_maps(g)
     crucible_list.reset_maps(c)
+    global kinetic, energy, power
+    kinetic, energy, power = db.get_all_weapons()
+    print('weapons updated')
     await ctx.send('Database is updated')
 
 
 # Bot chat
 @bot.event
-async def on_message(message):
+async def on_message(message) -> None:
     if message.author == bot.user:
         return
 
@@ -151,7 +171,7 @@ async def on_message(message):
 
 # Text channel commands
 @bot.command()
-async def rand(ctx, *args):
+async def rand(ctx, *args) -> None:
     for arg in args:
         if arg == '-m':
             await ctx.send(rand.chose_rand_map())

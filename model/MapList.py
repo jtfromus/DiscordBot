@@ -1,5 +1,5 @@
 import random
-from db import get_maps
+from model.Map import Map
 
 
 class MapList:
@@ -9,7 +9,7 @@ class MapList:
         print(str(len(self.maps)) + " maps loaded")
 
     # This function returns a random map object
-    def chose_rand_map(self):
+    def chose_rand_map(self) -> Map:
         # If the maps list is exhausted reset it
         if not self.maps:
             print('list exhausted')
@@ -24,9 +24,9 @@ class MapList:
         return currentMap
 
     # reset the list from database
-    def reset_maps(self, maps):
+    def reset_maps(self, maps: [Map]) -> None:
         self.used_maps = []
         self.maps = maps
 
-    def get_maps(self):
+    def get_maps(self) -> [Map]:
         return self.maps
