@@ -11,6 +11,7 @@ BASE_URL_GROUP_V2 = 'https://bungie.net/Platform/GroupV2'
 
 
 # This code was altered from JAMeador13's code from http://destinydevs.github.io/BungieNetPlatform/docs/Manifest.
+# This function downloads Destiny2's database (manifest)
 def get_manifest() -> None:
     my_headers = {"X-API-Key": BUNGIE_API_KEY}
     manifest_url = BASE_URL + '/Manifest/'

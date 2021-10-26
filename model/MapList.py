@@ -3,7 +3,7 @@ from model.Map import Map
 
 
 class MapList:
-    def __init__(self, maps):
+    def __init__(self, maps: [Map]) -> None:
         self.used_maps = []
         self.maps = maps
         print(str(len(self.maps)) + " maps loaded")
