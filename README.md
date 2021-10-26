@@ -1,2 +1,1 @@
-This is Silent's Discord bot, adding more functions to the bot on top of the random crucible map chooser
-
+This is Silent's Discord bot, working on a weapon rating a recommendation function to the bot
