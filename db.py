@@ -11,7 +11,7 @@ BASE_URL_GROUP_V2 = 'https://bungie.net/Platform/GroupV2'
 
 
 # This code was altered from JAMeador13's code from http://destinydevs.github.io/BungieNetPlatform/docs/Manifest.
-def get_manifest():
+def get_manifest() -> None:
     my_headers = {"X-API-Key": BUNGIE_API_KEY}
     manifest_url = BASE_URL + '/Manifest/'
 
@@ -36,55 +36,38 @@ def get_manifest():
 
 
 # return a list crucible Map objects
-def get_maps() -> tuple[[Map], [Map]]:
+def get_maps(activity_dict: {}) -> tuple[[Map], [Map]]:
     crucible_maps = []
     gambit_maps = []
 
-    # connect to the manifest
-    con = sqlite3.connect('manifest.content')
-    print('Connected')
-    # create a cursor object
-    cur = con.cursor()
-
-    # get a list of all jsons from the DestinyActivityDefinition
-    cur.execute('SELECT json from DestinyActivityDefinition')
-
-    # this returns a list of tuples: the first item in each tuple is our json
-    items = cur.fetchall()
-
-    # create a list of jsons
-    item_jsons = [json.loads(item[0]) for item in items]
-
     place_holder_image = '/img/theme/destiny/bgs/pgcrs/placeholder.jpg'
 
-    for item in item_jsons:
+    for key in activity_dict:
         # Check if the item is a crucible map. 4088006058 is the crucible
-        if item['activityTypeHash'] == 4088006058 and \
-                item['placeHash'] == 4088006058 and not \
-                item['isPvP'] and \
-                item['pgcrImage'] != place_holder_image:
-            
-            newMap = Map(item['originalDisplayProperties']['name'], 
-                         item['pgcrImage'],
-                         item['originalDisplayProperties']['description'])
-            
+        if activity_dict[key]['activityTypeHash'] == 4088006058 and \
+                activity_dict[key]['placeHash'] == 4088006058 and not \
+                activity_dict[key]['isPvP'] and \
+                activity_dict[key]['pgcrImage'] != place_holder_image:
+
+            newMap = Map(activity_dict[key]['originalDisplayProperties']['name'],
+                         activity_dict[key]['pgcrImage'],
+                         activity_dict[key]['originalDisplayProperties']['description'])
+
             if not check_for_dupe(newMap, crucible_maps):
                 crucible_maps.append(newMap)
 
         # Check if the item is a gambit map. 248695599 is gambit
-        if item['activityTypeHash'] == 248695599 and \
-                item['placeHash'] == 248695599 and \
-                item['pgcrImage'] != place_holder_image:
-            
-            newMap = Map(item['originalDisplayProperties']['name'], 
-                         item['pgcrImage'],
-                         item['originalDisplayProperties']['description'])
-            
+        if activity_dict[key]['activityTypeHash'] == 248695599 and \
+                activity_dict[key]['placeHash'] == 248695599 and \
+                activity_dict[key]['pgcrImage'] != place_holder_image:
+
+            newMap = Map(activity_dict[key]['originalDisplayProperties']['name'],
+                         activity_dict[key]['pgcrImage'],
+                         activity_dict[key]['originalDisplayProperties']['description'])
+
             if not check_for_dupe(newMap, gambit_maps):
                 gambit_maps.append(newMap)
 
-    con.close()
-    print('Connection Closed')
     return crucible_maps, gambit_maps
 
 
@@ -97,43 +80,61 @@ def check_for_dupe(new_map: Map, map_list: [Map]) -> bool:
 
 
 # This function will return 3 list of weapons
-def get_all_weapons() -> tuple[[Weapon], [Weapon], [Weapon]]:
+def get_all_weapons(item_def_dict: {}) -> tuple[[Weapon], [Weapon], [Weapon]]:
+    kinetic = []
+    energy = []
+    power = []
+
+    for key in item_def_dict:
+        # itemType 3 is weapon
+        if item_def_dict[key]['itemType'] == 3:
+            current_weapon = Weapon(
+                item_def_dict[key]['displayProperties']['name'],
+                item_def_dict[key]['screenshot'],
+                item_def_dict[key]['itemTypeDisplayName'],
+                item_def_dict[key]['inventory']['tierTypeName']
+            )
+
+            # itemCategoryHashes 3 = energy, 2 = kinetic, 4 = power
+            if item_def_dict[key]['itemCategoryHashes'][0] == 3:
+                energy.append(current_weapon)
+            elif item_def_dict[key]['itemCategoryHashes'][0] == 2:
+                kinetic.append(current_weapon)
+            elif item_def_dict[key]['itemCategoryHashes'][0] == 4:
+                power.append(current_weapon)
+
+    return kinetic, energy, power
+
+
+# This function will return the hash table of the manifest
+def built_dict(hash_dict: {}) -> {}:
     # connect to the manifest
     con = sqlite3.connect('manifest.content')
     print('Connected')
     # create a cursor object
     cur = con.cursor()
-    # get a list of all jsons from the DestinyActivityDefinition
-    cur.execute('SELECT json from DestinyInventoryItemDefinition')
 
-    # this returns a list of tuples: the first item in each tuple is our json
-    items = cur.fetchall()
+    all_data = {}
 
-    # create a lists of jsons
-    item_jsons = [json.loads(item[0]) for item in items]
+    for table_name in hash_dict:
+        # get a list of all jsons from the DestinyActivityDefinition
+        cur.execute('SELECT json from ' + table_name)
+        print('Generating ' + table_name + ' dictionary....')
 
-    kinetic = []
-    energy = []
-    power = []
+        # this returns a list of tuples: the first item in each tuple is our json
+        items = cur.fetchall()
 
-    for item in item_jsons:
-        # itemType 3 is weapon
-        if item['itemType'] == 3:
-            current_weapon = Weapon(
-                item['displayProperties']['name'],
-                item['screenshot'],
-                item['itemTypeDisplayName'],
-                item['inventory']['tierTypeName']
-            )
-            
-            # itemCategoryHashes 3 = energy, 2 = kinetic, 4 = power
-            if item['itemCategoryHashes'][0] == 3:
-                energy.append(current_weapon)
-            elif item['itemCategoryHashes'][0] == 2:
-                kinetic.append(current_weapon)
-            elif item['itemCategoryHashes'][0] == 4:
-                power.append(current_weapon)
+        # create a lists of jsons
+        item_jsons = [json.loads(item[0]) for item in items]
 
-    con.close()
-    print('Connection Closed')
-    return kinetic, energy, power
+        # Create a dictionary with the hashes as keys and the jsons as values
+        item_dict = {}
+        hash = hash_dict[table_name]
+        for item in item_jsons:
+            item_dict[item[hash]] = item
+
+        # Add that dictionary to our all_data using the name of the table as a key.
+        all_data[table_name] = item_dict
+
+    print('Dictionary Generated!')
+    return all_data
