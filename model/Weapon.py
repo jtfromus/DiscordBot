@@ -1,9 +1,13 @@
 class Weapon:
-    def __init__(self, name: str, url: str, weapon_type: str, rarity: str) -> None:
+    def __init__(self,hash: int, name: str, url: str, weapon_type: str, rarity: str) -> None:
+        self.hash = hash
         self.name = name
         self.url = url
         self.weapon_type = weapon_type
         self.rarity = rarity
+
+    def get_hash(self) -> int:
+        return self.hash
 
     def get_name(self) -> str:
         return self.name
@@ -16,6 +20,9 @@ class Weapon:
 
     def get_rarity(self) -> str:
         return self.rarity
+
+    def set_hash(self, hash: int) -> None:
+        self.hash = hash
 
     def set_name(self, name: str) -> None:
         self.name = name

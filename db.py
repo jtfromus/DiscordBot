@@ -90,6 +90,7 @@ def get_all_weapons(item_def_dict: {}) -> tuple[[Weapon], [Weapon], [Weapon]]:
         # itemType 3 is weapon
         if item_def_dict[key]['itemType'] == 3:
             current_weapon = Weapon(
+                key,
                 item_def_dict[key]['displayProperties']['name'],
                 item_def_dict[key]['screenshot'],
                 item_def_dict[key]['itemTypeDisplayName'],
