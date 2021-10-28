@@ -9,6 +9,8 @@ from discord.ext import commands
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils.manage_commands import create_choice, create_option
 from dotenv import load_dotenv
+
+from model import Weapon
 from model.MapList import MapList
 
 
@@ -24,7 +26,8 @@ def main(args=None):
     hashes = {
         'DestinyActivityDefinition': 'hash',
         'DestinyInventoryItemDefinition': 'hash',
-        'DestinyPlugSetDefinition': 'hash'
+        'DestinyPlugSetDefinition': 'hash',
+        'DestinySocketTypeDefinition': 'hash'
     }
 
     # bot command settings
@@ -166,6 +169,66 @@ def main(args=None):
         kinetic, energy, power = db.get_all_weapons(all_data['DestinyInventoryItemDefinition'])
 
         await ctx.send('Database is updated')
+
+    @slash.slash(
+        name='get_weapon_rolls',
+        description="This function gives you the perk roll a gun can drop",
+        guild_ids=GUILD_ID_LIST,
+        options=[
+            create_option(
+                name="name",
+                description="name of the gun",
+                required=True,
+                option_type=3
+            )
+        ]
+    )
+    async def _weapon_rolls(ctx: SlashContext, name: str) -> None:
+        weapon: Weapon
+        # See if the weapon exists
+        weapon = Weapon.find_weapon(kinetic, name)
+        if weapon is None:
+            weapon = Weapon.find_weapon(energy, name)
+
+        if weapon is None:
+            weapon = Weapon.find_weapon(power, name)
+
+        if weapon is None:
+            embed = discord.Embed(title='WEAPON NOT FOUND',
+                                  description=f'{name} is not found\n'
+                                              f'please check if the weapon name is correct',
+                                  color=0xFF5733)
+        else:
+            # get the perks for the weapon from all data
+            weapon_perks = {}
+            for perk_slot in all_data['DestinyInventoryItemDefinition'][weapon.get_hash()]['sockets']['socketEntries']:
+                # 4241085061 is weapon perks
+                if perk_slot['socketTypeHash'] != 0 and \
+                        all_data['DestinySocketTypeDefinition'][perk_slot['socketTypeHash']]['socketCategoryHash'] == 4241085061 and \
+                        perk_slot['preventInitializationOnVendorPurchase'] is False:
+                    perk_pool = []
+                    if 'randomizedPlugSetHash' in perk_slot:
+                        for perk in all_data['DestinyPlugSetDefinition'][perk_slot['randomizedPlugSetHash']]['reusablePlugItems']:
+                            perk_pool.append(
+                                all_data['DestinyInventoryItemDefinition'][perk['plugItemHash']]['displayProperties']['name']
+                            )
+                    else:
+                        perk_pool.append(
+                            all_data['DestinyInventoryItemDefinition'][perk_slot['singleInitialItemHash']]['displayProperties']['name']
+                        )
+                    perk_type = all_data['DestinySocketTypeDefinition'][perk_slot['socketTypeHash']]['plugWhitelist'][0]['categoryIdentifier']
+                    # check if key already exists
+                    if perk_type in weapon_perks:
+                        perk_type += ' '
+                    weapon_perks[perk_type] = perk_pool
+            embed = discord.Embed(title=weapon.get_name(),
+                                  description=weapon.get_weapon_type(),
+                                  color=0xFF5733)
+            embed.set_thumbnail(url=BUNGIE_URL + weapon.get_icon())
+            for key in weapon_perks:
+                embed.add_field(name=key, value=',\n'.join(weapon_perks[key]), inline=True)
+        await ctx.send(embed=embed)
+
 
     # Bot chat
     @bot.event

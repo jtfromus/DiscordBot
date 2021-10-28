@@ -93,6 +93,7 @@ def get_all_weapons(item_def_dict: {}) -> tuple[[Weapon], [Weapon], [Weapon]]:
                 key,
                 item_def_dict[key]['displayProperties']['name'],
                 item_def_dict[key]['screenshot'],
+                item_def_dict[key]['displayProperties']['icon'],
                 item_def_dict[key]['itemTypeDisplayName'],
                 item_def_dict[key]['inventory']['tierTypeName']
             )
