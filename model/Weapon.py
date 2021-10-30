@@ -1,12 +1,29 @@
 class Weapon:
     def __init__(self, hash: int, name: str, screen_shot: str, icon: str, weapon_type: str, rarity: str, perks: {}) -> None:
-        self.hash = hash
-        self.name = name
-        self.screen_shot = screen_shot
-        self.icon = icon
-        self.weapon_type = weapon_type
-        self.rarity = rarity
-        self.perks = perks
+        self.hash: str = hash
+        self.name: str = name
+        self.screen_shot: str = screen_shot
+        self.icon: str = icon
+        self.weapon_type: str = weapon_type
+        self.rarity: str = rarity
+        self.perks: {} = perks
+
+    # This function checks if the perk combo is available
+    def perk_possible(self, perks: [str]) -> bool:
+        all_perks = self.perks.copy()
+
+        # Search each perk slot for each perks
+        for perk in [p.lower() for p in perks]:
+            found: bool = False
+            for key in all_perks:
+                # If the perk is found in the slot, remove the entire slot from the search pool for the next perk
+                if perk in [p.lower() for p in all_perks[key]]:
+                    all_perks.pop(key)
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
 
     def get_hash(self) -> int:
         return self.hash

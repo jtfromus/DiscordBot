@@ -143,6 +143,27 @@ def get_all_weapons(all_data: {}) -> tuple[[Weapon], [Weapon], [Weapon]]:
     return kinetic, energy, power
 
 
+# This function will return the list of all weapon perks
+def get_all_weapon_perks(all_data: {}) -> [str]:
+    item_def_dict = all_data['DestinyInventoryItemDefinition']
+    perks = [str]
+    for key in item_def_dict:
+        # 3708671066 is frame
+        # 3085181971 is barrel
+        # 4184407433 is magazines
+        # 2411768833 is scopes
+        # itemType 19 is Mods
+        if item_def_dict[key]['displayProperties']['name'] != '' and \
+                item_def_dict[key]['itemType'] == 19 and (
+                        3708671066 in item_def_dict[key]['itemCategoryHashes'] or
+                        3085181971 in item_def_dict[key]['itemCategoryHashes'] or
+                        4184407433 in item_def_dict[key]['itemCategoryHashes'] or
+                        2411768833 in item_def_dict[key]['itemCategoryHashes']
+                ):
+            perks.append(item_def_dict[key]['displayProperties']['name'])
+    return perks
+
+
 # This function will return the hash table of the manifest
 def built_dict(hash_dict: {}) -> {}:
     # connect to the manifest
@@ -166,9 +187,9 @@ def built_dict(hash_dict: {}) -> {}:
 
         # Create a dictionary with the hashes as keys and the jsons as values
         item_dict = {}
-        hash = hash_dict[table_name]
+        key = hash_dict[table_name]
         for item in item_jsons:
-            item_dict[item[hash]] = item
+            item_dict[item[key]] = item
 
         # Add that dictionary to our all_data using the name of the table as a key.
         all_data[table_name] = item_dict

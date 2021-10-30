@@ -172,21 +172,20 @@ def main(args=None):
 
     @slash.slash(
         name='get_weapon_rolls',
-        description="This function gives you the perk roll a gun can drop",
+        description="This command gives you the perk roll a gun can drop",
         guild_ids=GUILD_ID_LIST,
         options=[
             create_option(
                 name="name",
                 description="name of the gun",
                 required=True,
-                option_type=3
+                option_type=3,
             )
         ]
     )
     async def _weapon_rolls(ctx: SlashContext, name: str) -> None:
-        weapon: Weapon
         # See if the weapon exists
-        weapon = Weapon.find_weapon(kinetic + energy + power, name)
+        weapon: Weapon = Weapon.find_weapon(kinetic + energy + power, name)
 
         if weapon is None:
             embed = discord.Embed(title='WEAPON NOT FOUND',
@@ -201,6 +200,73 @@ def main(args=None):
             embed.set_thumbnail(url=BUNGIE_URL + weapon.get_icon())
             for key in weapon.get_perks():
                 embed.add_field(name=key, value=',\n'.join(weapon.get_perks()[key]), inline=True)
+        await ctx.send(embed=embed)
+
+    @slash.slash(
+        name='can_roll_with',
+        description='This command will let you know if the perks can roll with the weapon you provided',
+        guild_ids=GUILD_ID_LIST,
+        options=[
+            create_option(
+                name="name",
+                description="name of the gun",
+                required=True,
+                option_type=3
+            ),
+            create_option(
+                name="perk1",
+                description="perks name",
+                required=True,
+                option_type=3
+            ),
+            create_option(
+                name="perk2",
+                description="perks name",
+                required=False,
+                option_type=3
+            ),
+            create_option(
+                name="perk3",
+                description="perks name",
+                required=False,
+                option_type=3
+            ),
+            create_option(
+                name="perk4",
+                description="perks name",
+                required=False,
+                option_type=3
+            )
+        ]
+    )
+    async def _weapon_can_roll_with(ctx: SlashContext, name: str, perk1: str, perk2: str = None, perk3: str = None, perk4: str = None) -> None:
+        # See if the weapon exists
+        weapon: Weapon = Weapon.find_weapon(kinetic + energy + power, name)
+        if weapon is None:
+            embed = discord.Embed(title='WEAPON NOT FOUND',
+                                  description=f'{name} is not found\n'
+                                              f'please check if the weapon name is correct',
+                                  color=0xFF5733)
+        else:
+            perks: [str] = [perk1, perk2, perk3, perk4]
+            perks = [not_none_perk for not_none_perk in perks if not_none_perk]
+            if weapon.perk_possible(perks):
+                # Prepare the embedded message
+                embed = discord.Embed(title=weapon.get_name(),
+                                      description=f'{weapon.get_weapon_type()}\nCan roll with:',
+                                      color=0x1C45B8)
+                embed.set_thumbnail(url=BUNGIE_URL + weapon.get_icon())
+                for key in weapon.get_perks():
+                    for perk in perks:
+                        if perk.lower() in [p.lower() for p in weapon.get_perks()[key]]:
+                            embed.add_field(name=key, value=perk, inline=True)
+            else:
+                embed = discord.Embed(title=weapon.get_name(),
+                                      description=f'{weapon.get_weapon_type()}\nCan\'t roll with:',
+                                      color=0xFF5733)
+                embed.set_thumbnail(url=BUNGIE_URL + weapon.get_icon())
+                for i in range(len(perks)):
+                    embed.add_field(name=str(i), value=perks[i], inline=True)
         await ctx.send(embed=embed)
 
     # Bot chat
