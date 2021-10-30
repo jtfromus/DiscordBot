@@ -81,21 +81,55 @@ def check_for_dupe(new_map: Map, map_list: [Map]) -> bool:
 
 
 # This function will return 3 list of weapons
-def get_all_weapons(item_def_dict: {}) -> tuple[[Weapon], [Weapon], [Weapon]]:
+def get_all_weapons(all_data: {}) -> tuple[[Weapon], [Weapon], [Weapon]]:
     kinetic = []
     energy = []
     power = []
+    item_def_dict = all_data['DestinyInventoryItemDefinition']
+    plug_set_def = all_data['DestinyPlugSetDefinition']
+    socket_type_def = all_data['DestinySocketTypeDefinition']
 
     for key in item_def_dict:
         # itemType 3 is weapon
         if item_def_dict[key]['itemType'] == 3:
+            # get the perks for the weapon from all data
+            weapon_perks = {}
+
+            for perk_slot in item_def_dict[key]['sockets']['socketEntries']:
+                # 4241085061 is weapon perks. If socketTypeHash is 0 means there is not a perk slot there, more common
+                # in y1 weapons
+                if perk_slot['socketTypeHash'] != 0 and \
+                        socket_type_def[perk_slot['socketTypeHash']]['socketCategoryHash'] == 4241085061 and \
+                        perk_slot['preventInitializationOnVendorPurchase'] is False:
+                    perk_pool = []
+
+                    # randomizedPlugSetHash signals that this weapon do or don't have random rolls
+                    if 'randomizedPlugSetHash' in perk_slot:
+                        # Go to PlugSetDef to grab the list of perks for random rolls
+                        for perk in plug_set_def[perk_slot['randomizedPlugSetHash']]['reusablePlugItems']:
+                            perk_pool.append(item_def_dict[perk['plugItemHash']]['displayProperties']['name'])
+
+                    elif perk_slot['singleInitialItemHash'] != 0:
+                        # Just go grab the perk name from InvItemDef based on the perk hash
+                        perk_pool.append(item_def_dict[perk_slot['singleInitialItemHash']]['displayProperties']['name'])
+
+                    perk_type = socket_type_def[perk_slot['socketTypeHash']]['plugWhitelist'][0]['categoryIdentifier']
+
+                    # check if key already exists
+                    if perk_type in weapon_perks:
+                        perk_type += ' '
+
+                    weapon_perks[perk_type] = perk_pool
+
+            # create the weapon obj
             current_weapon = Weapon(
                 key,
                 item_def_dict[key]['displayProperties']['name'],
                 item_def_dict[key]['screenshot'],
                 item_def_dict[key]['displayProperties']['icon'],
                 item_def_dict[key]['itemTypeDisplayName'],
-                item_def_dict[key]['inventory']['tierTypeName']
+                item_def_dict[key]['inventory']['tierTypeName'],
+                weapon_perks
             )
 
             # itemCategoryHashes 3 = energy, 2 = kinetic, 4 = power

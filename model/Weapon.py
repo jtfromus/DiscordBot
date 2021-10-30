@@ -1,11 +1,12 @@
 class Weapon:
-    def __init__(self, hash: int, name: str, screen_shot: str, icon: str, weapon_type: str, rarity: str) -> None:
+    def __init__(self, hash: int, name: str, screen_shot: str, icon: str, weapon_type: str, rarity: str, perks: {}) -> None:
         self.hash = hash
         self.name = name
         self.screen_shot = screen_shot
         self.icon = icon
         self.weapon_type = weapon_type
         self.rarity = rarity
+        self.perks = perks
 
     def get_hash(self) -> int:
         return self.hash
@@ -25,6 +26,9 @@ class Weapon:
     def get_rarity(self) -> str:
         return self.rarity
 
+    def get_perks(self) -> {}:
+        return self.perks
+
     def set_hash(self, hash: int) -> None:
         self.hash = hash
 
@@ -42,6 +46,9 @@ class Weapon:
 
     def set_rarity(self, rarity: str) -> None:
         self.rarity = rarity
+
+    def set_perks(self, perks: {}) -> None:
+        self.perks = perks
 
 
 # This function will find the weapon obj in the given list

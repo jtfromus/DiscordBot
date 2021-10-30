@@ -47,7 +47,7 @@ def main(args=None):
     cl, gl = db.get_maps(all_data['DestinyActivityDefinition'])
     gambit_list = MapList(gl)
     crucible_list = MapList(cl)
-    kinetic, energy, power = db.get_all_weapons(all_data['DestinyInventoryItemDefinition'])
+    kinetic, energy, power = db.get_all_weapons(all_data)
 
     @bot.event
     async def on_ready() -> None:
@@ -186,12 +186,7 @@ def main(args=None):
     async def _weapon_rolls(ctx: SlashContext, name: str) -> None:
         weapon: Weapon
         # See if the weapon exists
-        weapon = Weapon.find_weapon(kinetic, name)
-        if weapon is None:
-            weapon = Weapon.find_weapon(energy, name)
-
-        if weapon is None:
-            weapon = Weapon.find_weapon(power, name)
+        weapon = Weapon.find_weapon(kinetic + energy + power, name)
 
         if weapon is None:
             embed = discord.Embed(title='WEAPON NOT FOUND',
@@ -199,36 +194,14 @@ def main(args=None):
                                               f'please check if the weapon name is correct',
                                   color=0xFF5733)
         else:
-            # get the perks for the weapon from all data
-            weapon_perks = {}
-            for perk_slot in all_data['DestinyInventoryItemDefinition'][weapon.get_hash()]['sockets']['socketEntries']:
-                # 4241085061 is weapon perks
-                if perk_slot['socketTypeHash'] != 0 and \
-                        all_data['DestinySocketTypeDefinition'][perk_slot['socketTypeHash']]['socketCategoryHash'] == 4241085061 and \
-                        perk_slot['preventInitializationOnVendorPurchase'] is False:
-                    perk_pool = []
-                    if 'randomizedPlugSetHash' in perk_slot:
-                        for perk in all_data['DestinyPlugSetDefinition'][perk_slot['randomizedPlugSetHash']]['reusablePlugItems']:
-                            perk_pool.append(
-                                all_data['DestinyInventoryItemDefinition'][perk['plugItemHash']]['displayProperties']['name']
-                            )
-                    else:
-                        perk_pool.append(
-                            all_data['DestinyInventoryItemDefinition'][perk_slot['singleInitialItemHash']]['displayProperties']['name']
-                        )
-                    perk_type = all_data['DestinySocketTypeDefinition'][perk_slot['socketTypeHash']]['plugWhitelist'][0]['categoryIdentifier']
-                    # check if key already exists
-                    if perk_type in weapon_perks:
-                        perk_type += ' '
-                    weapon_perks[perk_type] = perk_pool
+            # Prepare the embedded message
             embed = discord.Embed(title=weapon.get_name(),
                                   description=weapon.get_weapon_type(),
                                   color=0xFF5733)
             embed.set_thumbnail(url=BUNGIE_URL + weapon.get_icon())
-            for key in weapon_perks:
-                embed.add_field(name=key, value=',\n'.join(weapon_perks[key]), inline=True)
+            for key in weapon.get_perks():
+                embed.add_field(name=key, value=',\n'.join(weapon.get_perks()[key]), inline=True)
         await ctx.send(embed=embed)
-
 
     # Bot chat
     @bot.event
